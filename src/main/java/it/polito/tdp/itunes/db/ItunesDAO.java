@@ -100,7 +100,9 @@ public class ItunesDAO {
 	}
 	
 	public List<Genre> getAllGenres(){
-		final String sql = "SELECT * FROM Genre";
+		final String sql = "SELECT DISTINCT * "
+				+ "FROM genre g "
+				+ "ORDER BY g.Name ";
 		List<Genre> result = new LinkedList<>();
 		
 		try {
@@ -139,6 +141,80 @@ public class ItunesDAO {
 		return result;
 	}
 
+	public List<Track> getAllTracks(Integer minMS, Integer maxMS, String genre) {
+		final String sql = "SELECT t.* "
+				+ "FROM track t, genre g "
+				+ "WHERE t.Milliseconds > ? AND t.Milliseconds < ? "
+				+ "AND t.GenreId = g.GenreId AND g.Name = ? ";
+		List<Track> result = new ArrayList<Track>();
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, minMS);
+			st.setInt(2, maxMS);
+			st.setString(3, genre);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(new Track(res.getInt("TrackId"), res.getString("Name"), 
+						res.getString("Composer"), res.getInt("Milliseconds"), 
+						res.getInt("Bytes"),res.getDouble("UnitPrice")));
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		return result;
+	}
+
+	public int getnumPlaylist(Track x) {
+		final String sql = "SELECT COUNT(DISTINCT pt1.PlaylistId)AS n "
+				+ "FROM playlisttrack pt1 "
+				+ "WHERE pt1.TrackId =  ? ";
+		Integer n = 0;
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, x.getTrackId());
+			
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				n = res.getInt("n");
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		return n;
+	}
+
+	public List<Playlist> getPlaylistInCuiCompareX(Track x) {
+		final String sql = "SELECT DISTINCT p.* "
+				+ "FROM playlisttrack pt, playlist p "
+				+ "WHERE pt.TrackId = ? AND p.PlaylistId = pt.PlaylistId ";
+		List<Playlist> result = new LinkedList<>();
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, x.getTrackId());
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(new Playlist(res.getInt("PlaylistId"), res.getString("Name")));
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		return result;
+	}
 	
 	
 }

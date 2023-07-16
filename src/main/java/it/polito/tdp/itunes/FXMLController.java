@@ -5,9 +5,13 @@
 package it.polito.tdp.itunes;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.itunes.model.Genre;
 import it.polito.tdp.itunes.model.Model;
+import it.polito.tdp.itunes.model.Track;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -32,7 +36,7 @@ public class FXMLController {
     private Button btnPlaylist; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbGenere"
-    private ComboBox<?> cmbGenere; // Value injected by FXMLLoader
+    private ComboBox<String> cmbGenere; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtDTOT"
     private TextField txtDTOT; // Value injected by FXMLLoader
@@ -49,11 +53,66 @@ public class FXMLController {
     @FXML
     void doCalcolaPlaylist(ActionEvent event) {
 
+    	String dTOT = this.txtDTOT.getText();
+    	Integer durataTot;
+    	if(dTOT == null){
+    		this.txtResult.setText("Inserire una valore nelcampo DTOT!");
+    		return;
+    	}
+    	
+    	try {
+    		durataTot = Integer.parseInt(dTOT);
+    	}catch(NumberFormatException e) {
+    		this.txtResult.setText("Inserire un valore numerico nel campo DTOT");
+    		return;
+    	}
+    	
+    	List<Track>res = new ArrayList<>(model.calcolaPercorso(durataTot));
+    	if(res.isEmpty()) {
+    		this.txtResult.setText("Nessun percorso troato!");
+    		return;
+    	}
+    	String s = "Percorso trovato: \n";
+    	for(Track x : res) {
+    		s += x.getName()+"\n";
+    	}
+    	this.txtResult.setText(s);
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-
+    	String genere = this.cmbGenere.getValue();
+    	String smin = this.txtMin.getText();
+    	String smax = this.txtMax.getText();
+    	Integer min;
+    	Integer max;
+    	if(smin == null){
+    		this.txtResult.setText("Inserire una valore nelcampo min!");
+    		return;
+    	}
+    	if(smax == null){
+    		this.txtResult.setText("Inserire un valore nel campo max!");
+    		return;
+    	}
+    	try {
+    		min = Integer.parseInt(smin);
+    		
+    	}catch(NumberFormatException e) {
+    		this.txtResult.setText("Inserire un valore numerico nel campo min");
+    		return;
+    	}
+    	try {
+    		max = Integer.parseInt(smax);
+    		
+    	}catch(NumberFormatException e) {
+    		this.txtResult.setText("Inserire un valore numerico nel campo max");
+    		return;
+    	}
+    	String s = model.creaGrafo(min, max, genere);
+    	this.txtResult.setText(s);
+    	
+    	String s2 = model.getConnectedComponents();
+    	this.txtResult.appendText(s2);
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -70,6 +129,9 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	for(Genre x : model.getAllGenres()) {
+    		this.cmbGenere.getItems().add(x.getName());
+    	}
     }
 
 }
